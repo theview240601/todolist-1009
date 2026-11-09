@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>할 일 앱 자동 검사</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      background: #5054a4;
+      color: #f4ebdf;
+      font-family: "Segoe UI", "Malgun Gothic", -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    main { max-width: 760px; margin: 0 auto; padding: 28px 16px 56px; }
+    h1 { margin: 0 0 4px; color: #f48c3c; font-size: 28px; }
+    .lead { margin: 0 0 20px; opacity: 0.85; }
+    .summary {
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .summary.pass { background: #1f3a2c; color: #9fe0b5; }
+    .summary.fail { background: #3d2622; color: #ec6650; }
+    section { background: #1c2120; border-radius: 16px; padding: 14px 18px; margin-bottom: 14px; }
+    h2 { margin: 0 0 8px; font-size: 16px; color: #efb68e; }
+    ul { list-style: none; margin: 0; padding: 0; }
+    li { padding: 4px 0; border-bottom: 1px solid #343e3b; overflow-wrap: anywhere; }
+    li:last-child { border-bottom: 0; }
+    .why { display: block; color: #ec6650; font-size: 13px; padding-left: 26px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>할 일 앱 자동 검사</h1>
+    <p class="lead">이 페이지를 열 때마다 앱의 계산이 맞는지 자동으로 검사해요. 실제 할 일 목록은 건드리지 않아요.</p>
+    <div class="summary" id="summary">검사하는 중…</div>
+    <div id="results"></div>
+  </main>
+
+  <!-- 검사할 앱 코드 (화면을 그리는 main.js·actions.js는 빼고 계산 부분만) -->
+  <script src="../js/storage.js"></script>
+  <script src="../js/dates.js"></script>
+  <script src="../js/render.js"></script>
+
+  <script>
+    /* ---------- 아주 작은 검사 도구 ---------- */
+    const groups = [];
+    let current = null;
+
+    function group(name, fn) {
+      current = { name, items: [] };
+      groups.push(current);
+      fn();
+    }
+
+    function test(name, fn) {
+      try {
+        fn();
+        current.items.push({ name, ok: true });
+      } catch (e) {
+        current.items.push({ name, ok: false, why: e.message });
+      }
+    }
+
+    function same(actual, expected) {
+      const a = JSON.stringify(actual);
+      const b = JSON.stringify(expected);
+      if (a !== b) throw new Error('기대: ' + b + '\n실제: ' + a);
+    }
+
+    /* ---------- 검사에 쓰는 재료 ---------- */
+    const TODAY = new Date(2026, 10, 9);   // 2026년 11월 9일을 "오늘"로 정하고 검사
+    const ids = (list) => list.map((t) => t.id);
+
+    const sampleTasks = () => [
+      { id: 'a', title: '마감 없음', projectId: 'p1', due: '', priority: 'high', memo: '', done: false, createdAt: 1 },
+      { id: 'b', title: '내일 마감', projectId: 'p1', due: '2026-11-10', priority: 'low', memo: '', done: false, createdAt: 2 },
+      { id: 'c', title: '오늘 마감', projectId: 'p2', due: '2026-11-09', priority: 'mid', memo: '팀장님 확인', done: false, createdAt: 3 },
+      { id: 'd', title: '끝난 일', projectId: 'p2', due: '2026-11-01', priority: 'high', memo: '', done: true, createdAt: 4 },
+      { id: 'e', title: '같은 날 높음', projectId: 'p1', due: '2026-11-10', priority: 'high', memo: '', done: false, createdAt: 5 },
+    ];
+
+    /* ---------- 1. 날짜 계산 ---------- */
+    group('날짜 계산 (dates.js)', () => {
+      test('3일 뒤 마감 → 남은 날 3', () => same(daysLeft('2026-11-12', TODAY), 3));
+      test('오늘 마감 → 남은 날 0', () => same(daysLeft('2026-11-09', TODAY), 0));
+      test('2일 전 마감 → 남은 날 -2', () => same(daysLeft('2026-11-07', TODAY), -2));
+      test('달이 바뀌어도 맞게 셈 (12월 1일 → 22)', () => same(daysLeft('2026-12-01', TODAY), 22));
+      test('"D-3"은 곧 마감(soon)', () => same(dueInfo({ due: '2026-11-12' }, TODAY), { text: 'D-3', cls: 'soon' }));
+      test('"D-11"은 여유 있음', () => same(dueInfo({ due: '2026-11-20' }, TODAY), { text: 'D-11', cls: '' }));
+      test('오늘이면 "오늘 마감"', () => same(dueInfo({ due: '2026-11-09' }, TODAY), { text: '오늘 마감', cls: 'today' }));
+      test('지났으면 "2일 지남"', () => same(dueInfo({ due: '2026-11-07' }, TODAY), { text: '2일 지남', cls: 'overdue' }));
+      test('마감일이 없으면 표시 없음', () => same(dueInfo({ due: '' }, TODAY), null));
+      test('안 끝난 일이 지났으면 마감 지남', () => same(isOverdue({ due: '2026-11-07', done: false }, TODAY), true));
+      test('끝낸 일은 지났어도 마감 지남 아님', () => same(isOverdue({ due: '2026-11-07', done: true }, TODAY), false));
+      test('마감일이 없으면 마감 지남 아님', () => same(isOverdue({ due: '', done: false }, TODAY), false));
+      test('올해 날짜는 "11월 7일"', () => same(formatDate('2026-11-07', TODAY), '11월 7일'));
+      test('다른 해 날짜는 연도까지', () => same(formatDate('2027-01-03', TODAY), '2027년 1월 3일'));
+    });
+
+    /* ---------- 2. 정렬 ---------- */
+    group('정렬 (render.js의 filterAndSort)', () => {
+      test('마감일 빠른 순 (같은 날이면 중요도 높은 것 먼저, 마감 없는 일과 끝난 일은 뒤로)', () =>
+        same(ids(filterAndSort(sampleTasks(), { sort: 'due' })), ['c', 'e', 'b', 'a', 'd']));
+      test('중요도 높은 순 (같은 중요도면 마감일 빠른 것 먼저)', () =>
+        same(ids(filterAndSort(sampleTasks(), { sort: 'priority' })), ['e', 'a', 'c', 'b', 'd']));
+      test('최근 추가한 순', () =>
+        same(ids(filterAndSort(sampleTasks(), { sort: 'created' })), ['e', 'c', 'b', 'a', 'd']));
+      test('끝낸 일은 어떤 정렬이든 맨 아래', () => {
+        for (const sort of ['due', 'priority', 'created']) {
+          const list = filterAndSort(sampleTasks(), { sort });
+          same(list[list.length - 1].id, 'd');
+        }
+      });
+      test('중요도가 이상한 값이면 "보통"으로 취급', () => {
+        const tasks = [
+          { id: 'x', title: 'x', priority: '???', due: '', done: false, createdAt: 1 },
+          { id: 'y', title: 'y', priority: 'low', due: '', done: false, createdAt: 2 },
+          { id: 'z', title: 'z', priority: 'high', due: '', done: false, createdAt: 3 },
+        ];
+        same(ids(filterAndSort(tasks, { sort: 'priority' })), ['z', 'x', 'y']);
+      });
+      test('원래 목록의 순서는 바꾸지 않음', () => {
+        const tasks = sampleTasks();
+        filterAndSort(tasks, { sort: 'due' });
+        same(ids(tasks), ['a', 'b', 'c', 'd', 'e']);
+      });
+    });
+
+    /* ---------- 3. 보기 필터와 검색 ---------- */
+    group('보기 필터와 검색 (render.js의 filterAndSort)', () => {
+      test('"할 일만"이면 끝낸 일이 빠짐', () =>
+        same(ids(filterAndSort(sampleTasks(), { filter: 'open' })), ['c', 'e', 'b', 'a']));
+      test('"완료만"이면 끝낸 일만', () =>
+        same(ids(filterAndSort(sampleTasks(), { filter: 'done' })), ['d']));
+      test('프로젝트를 고르면 그 프로젝트 일만', () =>
+        same(ids(filterAndSort(sampleTasks(), { project: 'p2' })), ['c', 'd']));
+      test('메모 안의 글자로도 찾음 ("팀장")', () =>
+        same(ids(filterAndSort(sampleTasks(), { search: '팀장' })), ['c']));
+      test('제목으로 찾음 ("마감")', () =>
+        same(ids(filterAndSort(sampleTasks(), { search: '마감' })), ['c', 'b', 'a']));
+      test('검색어 앞뒤 빈칸은 무시', () =>
+        same(ids(filterAndSort(sampleTasks(), { search: '  끝난  ' })), ['d']));
+      test('영어는 대문자·소문자 구분 없이 찾음', () => {
+        const tasks = [{ id: 'r', title: 'Weekly Report', memo: '', due: '', done: false, createdAt: 1 }];
+        same(ids(filterAndSort(tasks, { search: 'REPORT' })), ['r']);
+      });
+      test('조건을 겹쳐 쓸 수 있음 (p1 + 할 일만 + "마감")', () =>
+        same(ids(filterAndSort(sampleTasks(), { project: 'p1', filter: 'open', search: '마감' })), ['b', 'a']));
+    });
+
+    /* ---------- 4. 저장하고 불러오기 ---------- */
+    group('저장하고 불러오기 (storage.js)', () => {
+      const TEST_KEY = 'work-todo-test-only';   // 실제 목록(work-todo-v1)과 다른 칸
+      const realBefore = localStorage.getItem(STORAGE_KEY);
+      const clean = () => {
+        localStorage.removeItem(TEST_KEY);
+        localStorage.removeItem(TEST_KEY + '-backup');
+      };
+
+      try {
+        clean();
+        test('처음이면 기본 프로젝트 "일반" 하나', () => {
+          const d = readData(TEST_KEY);
+          same(d.projects.map((p) => p.name), ['일반']);
+          same(d.tasks, []);
+        });
+        test('저장한 것을 그대로 다시 불러옴', () => {
+          const saved = { projects: [{ id: 'p1', name: '마케팅' }], tasks: sampleTasks() };
+          same(writeData(TEST_KEY, saved), true);
+          same(readData(TEST_KEY), saved);
+        });
+        test('저장 내용이 망가졌으면 기본 목록 + 원래 내용은 따로 보관', () => {
+          localStorage.setItem(TEST_KEY, '{망가진 내용');
+          same(readData(TEST_KEY).projects.length, 1);
+          same(localStorage.getItem(TEST_KEY + '-backup'), '{망가진 내용');
+        });
+        test('프로젝트가 하나도 없으면 기본 목록', () => {
+          localStorage.setItem(TEST_KEY, JSON.stringify({ projects: [], tasks: [] }));
+          same(readData(TEST_KEY).projects.map((p) => p.name), ['일반']);
+        });
+        test('보기 설정이 없으면 기본값', () => {
+          same(readUi(TEST_KEY + '-ui'), { project: 'all', sort: 'due', filter: 'all' });
+        });
+      } finally {
+        clean();
+      }
+
+      test('검사하는 동안 실제 할 일 목록은 그대로', () => same(localStorage.getItem(STORAGE_KEY), realBefore));
+    });
+
+    /* ---------- 결과 보여 주기 ---------- */
+    const all = groups.flatMap((g) => g.items);
+    const failed = all.filter((t) => !t.ok).length;
+    const summary = document.getElementById('summary');
+    summary.className = 'summary ' + (failed ? 'fail' : 'pass');
+    summary.textContent = failed
+      ? '❌ ' + all.length + '개 중 ' + failed + '개가 틀렸어요'
+      : '✅ ' + all.length + '개 검사를 모두 통과했어요';
+
+    const results = document.getElementById('results');
+    for (const g of groups) {
+      const section = document.createElement('section');
+      const h2 = document.createElement('h2');
+      h2.textContent = g.name;
+      const ul = document.createElement('ul');
+      for (const t of g.items) {
+        const li = document.createElement('li');
+        li.textContent = (t.ok ? '✅ ' : '❌ ') + t.name;
+        if (!t.ok) {
+          const why = document.createElement('span');
+          why.className = 'why';
+          why.textContent = t.why;
+          li.append(why);
+        }
+        ul.append(li);
+      }
+      section.append(h2, ul);
+      results.append(section);
+    }
+  </script>
+</body>
+</html>
