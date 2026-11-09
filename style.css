@@ -1,0 +1,253 @@
+/* 깔끔한 흰 화면 */
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --border: #e6e8ec;
+  --border-strong: #d3d7de;
+  --text: #15181e;
+  --muted: #667085;
+  --faint: #a0a7b4;
+  --accent: #2f6fed;
+  --accent-soft: #edf3ff;
+  --high: #d92d20;
+  --high-soft: #fef1f0;
+  --mid: #c56a00;
+  --mid-soft: #fff6e8;
+  --low: #667085;
+  --low-soft: #f2f4f7;
+  --radius: 12px;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Pretendard", "Segoe UI", "Malgun Gothic", -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+.app {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 16px 56px;
+}
+
+/* 맨 위 */
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+}
+h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+.today { margin: 2px 0 0; color: var(--muted); }
+.stats { display: flex; gap: 8px; flex-wrap: wrap; }
+.stat {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.stat b { color: var(--text); font-variant-numeric: tabular-nums; }
+.stat.warn b { color: var(--high); }
+
+/* 두 칸 배치 */
+.layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.main { display: grid; gap: 16px; min-width: 0; }
+.section-title { margin: 0; font-size: 15px; font-weight: 700; }
+
+/* 왼쪽 프로젝트 칸 */
+.sidebar { padding: 16px; position: sticky; top: 16px; }
+.project-list { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 2px; }
+.project-item { position: relative; display: flex; align-items: center; border-radius: 8px; }
+.project-item:hover { background: var(--low-soft); }
+.project-item.active { background: var(--accent-soft); }
+.project-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.project-name .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-item.active .project-name { color: var(--accent); font-weight: 700; }
+.project-name .count { color: var(--faint); font-size: 13px; font-variant-numeric: tabular-nums; }
+/* 연필·휴지통은 마우스를 올렸을 때만 숫자 자리에 겹쳐서 보인다 */
+.project-actions {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  border-radius: 6px;
+  background: inherit;
+  opacity: 0;
+  pointer-events: none;
+}
+.project-item:hover .project-actions,
+.project-item:focus-within .project-actions { opacity: 1; pointer-events: auto; }
+.project-item:hover .count,
+.project-item:focus-within .count { visibility: hidden; }
+.project-item:hover:not(.active) .project-actions { background: var(--low-soft); }
+.project-item.active .project-actions { background: var(--accent-soft); }
+.project-form { display: flex; gap: 6px; }
+.project-form input { flex: 1; min-width: 0; }
+
+/* 입력칸 공통 */
+input[type="text"], input[type="search"], input[type="date"], select, textarea {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 11px;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus, button:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+textarea { resize: vertical; min-height: 44px; }
+
+.btn {
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--low-soft); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.btn.primary:hover { background: #2559c9; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.btn.ghost { border-color: transparent; color: var(--muted); }
+.btn:disabled { opacity: 0.4; cursor: default; background: none; }
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--faint);
+  cursor: pointer;
+}
+.icon-btn:hover { background: var(--low-soft); color: var(--text); }
+.icon-btn.danger:hover { background: var(--high-soft); color: var(--high); }
+
+/* 할 일 입력 폼 */
+.task-form { padding: 16px; display: grid; gap: 12px; }
+.task-form.editing { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.edit-banner { margin: 0; color: var(--accent); font-size: 13px; font-weight: 600; }
+.title-input { font-size: 16px; padding: 10px 12px; }
+.field-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.field { display: grid; gap: 4px; }
+.field span { font-size: 13px; color: var(--muted); }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* 목록 */
+.list-card { overflow: hidden; }
+.list-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 0;
+}
+.list-head .section-title .sub { color: var(--faint); font-weight: 400; margin-left: 6px; }
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.toolbar input { flex: 1 1 200px; }
+.toolbar select { width: auto; flex: 0 0 auto; }
+
+.task-list { list-style: none; margin: 0; padding: 0; }
+.task {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.task:last-child { border-bottom: 0; }
+.task:hover { background: #fbfcfd; }
+.task.editing { background: var(--accent-soft); }
+.check { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--accent); cursor: pointer; }
+.task .title { font-weight: 600; overflow-wrap: anywhere; }
+.task .memo {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; font-size: 13px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--low-soft);
+  color: var(--muted);
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.pri-high { background: var(--high-soft); color: var(--high); }
+.chip.pri-mid { background: var(--mid-soft); color: var(--mid); }
+.chip.pri-low { background: var(--low-soft); color: var(--low); }
+.chip.due.soon { background: var(--mid-soft); color: var(--mid); }
+.chip.due.today { background: var(--mid-soft); color: var(--mid); font-weight: 600; }
+.chip.due.overdue { background: var(--high-soft); color: var(--high); font-weight: 600; }
+.actions { display: flex; gap: 2px; }
+
+.task.done .title { text-decoration: line-through; color: var(--faint); font-weight: 400; }
+.task.done .memo, .task.done .meta { opacity: 0.55; }
+
+.empty { margin: 0; padding: 40px 16px; text-align: center; color: var(--muted); }
+
+/* 좁은 화면(휴대폰 폭) */
+@media (max-width: 760px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .field-row { grid-template-columns: 1fr; }
+  h1 { font-size: 22px; }
+}
+/* 터치 화면에서는 버튼을 항상 보여 준다 */
+@media (hover: none) {
+  .project-actions { position: static; transform: none; opacity: 1; pointer-events: auto; background: none; }
+  .project-item .count { visibility: visible; }
+}

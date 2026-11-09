@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>내 업무 할 일</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div>
+        <h1>내 업무 할 일</h1>
+        <p class="today" id="today"></p>
+      </div>
+      <div class="stats" id="stats"></div>
+    </header>
+
+    <div class="layout">
+      <!-- 왼쪽: 프로젝트(분류) 목록 -->
+      <aside class="sidebar card">
+        <h2 class="section-title">프로젝트</h2>
+        <ul class="project-list" id="projectList"></ul>
+        <form class="project-form" id="projectForm" autocomplete="off">
+          <input type="text" id="projectInput" placeholder="새 프로젝트 이름" maxlength="30" aria-label="새 프로젝트 이름">
+          <button type="submit" class="btn">추가</button>
+        </form>
+      </aside>
+
+      <main class="main">
+        <!-- 할 일 입력칸 (수정할 때도 같은 칸을 씀) -->
+        <form class="task-form card" id="taskForm" autocomplete="off">
+          <p class="edit-banner" id="editBanner" hidden>할 일을 수정하는 중이에요</p>
+          <input type="text" id="titleInput" class="title-input" placeholder="할 일을 입력하세요 (예: 주간 보고서 초안 쓰기)" maxlength="200" required aria-label="할 일 제목">
+          <div class="field-row">
+            <label class="field">
+              <span>프로젝트</span>
+              <select id="projectSelect"></select>
+            </label>
+            <label class="field">
+              <span>마감일</span>
+              <input type="date" id="dueInput">
+            </label>
+            <label class="field">
+              <span>중요도</span>
+              <select id="priorityInput">
+                <option value="high">높음</option>
+                <option value="mid" selected>보통</option>
+                <option value="low">낮음</option>
+              </select>
+            </label>
+          </div>
+          <textarea id="memoInput" rows="2" maxlength="1000" placeholder="메모 (선택)" aria-label="메모"></textarea>
+          <div class="form-actions">
+            <button type="button" class="btn" id="cancelEditBtn" hidden>취소</button>
+            <button type="submit" class="btn primary" id="submitBtn">추가</button>
+          </div>
+        </form>
+
+        <!-- 목록 위 보기 옵션 -->
+        <section class="list-card card">
+          <div class="list-head">
+            <h2 class="section-title" id="listTitle">전체</h2>
+            <button type="button" class="btn small ghost" id="clearDoneBtn">완료한 일 지우기</button>
+          </div>
+          <div class="toolbar">
+            <input type="search" id="searchInput" placeholder="제목·메모에서 찾기" aria-label="검색">
+            <select id="filterSelect" aria-label="보기">
+              <option value="all">전체 보기</option>
+              <option value="open">할 일만</option>
+              <option value="done">완료만</option>
+            </select>
+            <select id="sortSelect" aria-label="정렬">
+              <option value="due">마감일 빠른 순</option>
+              <option value="priority">중요도 높은 순</option>
+              <option value="created">최근 추가한 순</option>
+            </select>
+          </div>
+          <ul class="task-list" id="taskList"></ul>
+          <p class="empty" id="emptyMsg" hidden></p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
