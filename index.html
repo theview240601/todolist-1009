@@ -4,13 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>내 업무 할 일</title>
+  <!-- 손글씨 느낌 글꼴 (인터넷이 없으면 기본 글꼴로 보임) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- 반짝이 별 모양 (아래에서 여러 번 꺼내 씀) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="sparkle" viewBox="0 0 24 24">
+        <path d="M12 0C12.9 7.2 16.8 11.1 24 12C16.8 12.9 12.9 16.8 12 24C11.1 16.8 7.2 12.9 0 12C7.2 11.1 11.1 7.2 12 0Z"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- 배경 그림: 숲색 덩어리, 주황 선, 반짝이 -->
+  <div class="backdrop" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <svg class="scribble" viewBox="0 0 160 320" fill="none">
+      <path d="M40 6c10 40-14 70 6 104 14 24 52 10 60 38 8 30-40 34-38 64 2 26 40 20 46 50 4 22-18 40-30 52M46 110c-22-6-40 8-38 30M106 148c18-8 40 2 44 22"/>
+    </svg>
+    <svg class="spark sp1"><use href="#sparkle"/></svg>
+    <svg class="spark sp2 outline"><use href="#sparkle"/></svg>
+    <svg class="spark sp3"><use href="#sparkle"/></svg>
+    <svg class="spark sp4 outline"><use href="#sparkle"/></svg>
+    <svg class="spark sp5"><use href="#sparkle"/></svg>
+  </div>
+
   <div class="app">
     <header class="top">
-      <div>
+      <div class="title-wrap">
         <h1>내 업무 할 일</h1>
+        <svg class="title-spark ts1" aria-hidden="true"><use href="#sparkle"/></svg>
+        <svg class="title-spark ts2" aria-hidden="true"><use href="#sparkle"/></svg>
         <p class="today" id="today"></p>
       </div>
       <div class="stats" id="stats"></div>
